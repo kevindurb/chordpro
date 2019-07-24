@@ -1,14 +1,20 @@
 import { parse, stringify, prettyPrint } from './chordpro.js';
 
+const LINE_PADDING = 1;
+const FONT_SIZE = 12;
+
 const chordMagic = window.chordMagic;
 
 const $in = document.getElementById('in');
 const $out = document.getElementById('out');
 const $steps = document.getElementById('steps');
+const $download = document.getElementById('download');
 
 $in.addEventListener('keyup', () => {
   $out.value = parseAndTranspose($in.value);
 });
+
+$download.addEventListener('click', downloadPDF);
 
 function parseAndTranspose(text) {
   const steps = parseInt($steps.value, 10);
@@ -30,8 +36,32 @@ function parseAndTranspose(text) {
     return token;
   });
 
-  console.log(transposedTokens);
-
   const chordPro = stringify(transposedTokens);
   return prettyPrint(chordPro);
+}
+
+function downloadPDF() {
+  const text = parseAndTranspose($in.value);
+  const doc = new jsPDF({
+  });
+
+  doc.setFont('courier');
+  doc.setFontSize(FONT_SIZE)
+
+  let y = 1;
+  let isChordLine = true;
+  text.split('\n').forEach((line) => {
+    doc.text(line, LINE_PADDING, y, {
+      baseline: 'top',
+      lineHeightFactor: 0,
+    });
+    y += isChordLine
+      ? FONT_SIZE
+      : FONT_SIZE + LINE_PADDING;
+    isChordLine = !isChordLine;
+  });
+
+  // doc.text(text.split('\n'), LINE_PADDING, LINE_PADDING);
+
+  doc.save('chords.pdf');
 }

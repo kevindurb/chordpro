@@ -19,9 +19,20 @@ const parseToken = (value) => {
   }
 };
 
+const buildChordLine = (line) => {
+  const chords = Array.from(line.match(chordRegex) || []).flat();
+  let chordSum = '';
+  return chords.reduce((resultLine, chord) => {
+    const chordIndex = line.indexOf(chord, resultLine.length);
+    const fill = Array(chordIndex - resultLine.length - chordSum.length).fill(' ').join('');
+    chordSum += chord;
+    return resultLine + fill + stripChord(chord);
+  }, '');
+};
+
 export const parse = (text) => {
   const cleanText = `${text}`.trim();
-  const unparsedTokens = Array.from(cleanText.match(tokenRegex)).flat();
+  const unparsedTokens = Array.from(cleanText.match(tokenRegex) || []).flat();
   return unparsedTokens.map(parseToken);
 };
 
@@ -37,18 +48,12 @@ export const stringify = (tokenList) => {
 export const prettyPrint = (chordPro) => {
   const lines = chordPro.split('\n');
   return lines.reduce((result, line) => {
-    if (chordRegex.test(line)) {
-      const chords = Array.from(line.match(chordRegex)).flat();
-      let chordSum = '';
-      const chordLine = chords.reduce((resultLine, chord) => {
-        const chordIndex = line.indexOf(chord, resultLine.length);
-        const fill = Array(chordIndex - resultLine.length - chordSum.length).fill(' ').join('');
-        chordSum += chord;
-        return resultLine + fill + stripChord(chor);
-      }, '');
-      const lyricsLine = line.replace(chordRegex, '');
-      return result + '\n' + chordLine + '\n' + lyricsLine;
-    }
-    return result + '\n' + line;
-  }, '');
+    const chordLine = buildChordLine(line);
+    const lyricsLine = line.replace(chordRegex, '');
+    return [
+      ...result,
+      chordLine,
+      lyricsLine,
+    ];
+  }, []).join('\n');
 }
